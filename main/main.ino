@@ -1,26 +1,30 @@
-  #include <Wire.h>
-  #include <Adafruit_GFX.h>
-  #include <Adafruit_LEDBackpack.h>
-  #include <ArduinoJson.h>
+    #include <Wire.h>
+    #include <Adafruit_GFX.h>
+    #include <Adafruit_LEDBackpack.h>
+    #include <ArduinoJson.h>
 
-  #define LED_BUILTIN 2
+    #define LED_BUILTIN 2
 
-  //Blink
-  unsigned long previousMillis = 0;
-  const long interval = 200;
-  bool isBlinking = false;
+    //Blink
+    unsigned long previousMillis = 0;
+    const long interval = 200;
+    bool isBlinking = false;
 
-  //Matrix
-  Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
+    //Display
+    int display_height = 8;
+    int display_width = 8;
 
-  void setup() {
-    pinMode(LED_BUILTIN, OUTPUT);
-    matrix.begin(0x70);
-    matrix.setBrightness(15);
+    //Matrix
+    Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
-    Serial.begin(115200);
-    Serial.setTimeout(50);
-  }
+    void setup() {
+      pinMode(LED_BUILTIN, OUTPUT);
+      matrix.begin(0x70);
+      matrix.setBrightness(15);
+
+      Serial.begin(115200);
+      Serial.setTimeout(50);
+    }
 
   void loop() {
     listenToCommands();
@@ -48,20 +52,40 @@
       visualize(json["image"]);
     }
 
-    Serial.println("OK");
     blink();
   }
 
   void init(){
     Serial.println("OK");
   }
-  void visualize(String image){
-    Serial.println(image);
 
-    // matrix.clear();
-    // matrix.drawPixel(4, 4, LED_ON);
-    // matrix.drawPixel(5, 5, LED_ON);
-    // matrix.writeDisplay();
+  void visualize(JsonVariant imageJson) {
+    matrix.clear();
+
+    String response = "";
+
+    for(int y = 0; y < display_height; y++) {
+        for(int x = 0; x < display_width; x++) {
+            int index = (y * display_width + x) * 4;
+
+            int red = imageJson[String(index)].as<int>();
+            int green = imageJson[String(index + 1)].as<int>();
+            int blue = imageJson[String(index + 2)].as<int>();
+            int alpha = imageJson[String(index + 3)].as<int>();
+
+            response += "(" + String(red) + "," + String(green) + "," + String(blue) + ")";
+
+            // Assuming LED_ON and LED_OFF are properly defined elsewhere in your code
+            if(red == 255 && green == 255 && blue == 255 && alpha == 255){
+                matrix.drawPixel(x, y, LED_ON);
+            } else {
+                matrix.drawPixel(x, y, LED_OFF);
+            }
+        }
+    }
+
+    matrix.writeDisplay();
+    Serial.println(response);
   }
 
   void blink() {
