@@ -75,7 +75,6 @@
 
             response += "(" + String(red) + "," + String(green) + "," + String(blue) + ")";
 
-            // Assuming LED_ON and LED_OFF are properly defined elsewhere in your code
             if(red == 255 && green == 255 && blue == 255 && alpha == 255){
                 matrix.drawPixel(x, y, LED_ON);
             } else {
